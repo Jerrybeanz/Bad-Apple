@@ -63,7 +63,7 @@ class VideoPlayer:
             ret, frame = cap.read()
 
             if not ret or frame is None:
-                print("End of video")
+                print("Finished loading video...")
                 break
 
             resized = cv2.resize(frame, (self.length, self.height), interpolation=cv2.INTER_CUBIC)
@@ -79,7 +79,12 @@ class VideoPlayer:
 
     @staticmethod
     def play_audio_thread():
-        pygame.mixer.init()
+        pygame.mixer.init(
+            frequency=48000,
+            size=-16,  # 16-bit audio
+            channels=2,  # Stereo
+            buffer=1028  # Buffer size
+        )
         pygame.mixer.music.load(resource_path("Bad Apple.mp3"))
         pygame.mixer.music.play()
 
@@ -88,13 +93,12 @@ class VideoPlayer:
         audio_thread.daemon = True
         audio_thread.start()
 
-    def play_video(self):
+    def play_video(self, frame_rate=30):
         self.play_audio()
 
         frame_index = 0
         total_frames = len(self.frames)
-        frame_rate = 30 # Original video frame rate was 30 fps
-        frame_duration = 1 / frame_rate
+        frame_duration = 1 / frame_rate # Original video frame rate was 30 fps
         start_time = time.time()
 
         while frame_index < total_frames:
