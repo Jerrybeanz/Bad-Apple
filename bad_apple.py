@@ -3,6 +3,9 @@ import os
 import xlwings as xw
 import cv2
 import numpy as np
+import pygame
+import threading
+import time
 
 
 def resource_path(relative_path):
@@ -74,6 +77,32 @@ class VideoPlayer:
             processed_frame = (binary == 255).astype(np.uint8) # Convert to array of 0 and 1's
             self.frames.append(processed_frame)
 
+    @staticmethod
+    def play_audio_thread():
+        pygame.mixer.init()
+        pygame.mixer.music.load(resource_path("Bad Apple.mp3"))
+        pygame.mixer.music.play()
+
+    def play_audio(self):
+        audio_thread = threading.Thread(target=self.play_audio_thread)
+        audio_thread.daemon = True
+        audio_thread.start()
+
     def play_video(self):
-        for frame in self.frames:
-            self.sheet.range(1, 1).value = frame
+        self.play_audio()
+
+        frame_index = 0
+        total_frames = len(self.frames)
+        frame_rate = 30 # Original video frame rate was 30 fps
+        frame_duration = 1 / frame_rate
+        start_time = time.time()
+
+        while frame_index < total_frames:
+            elapsed_time = time.time() - start_time
+            expected_frame = int(elapsed_time / frame_duration)
+
+            if expected_frame > frame_rate:
+                frame_index = min(expected_frame, total_frames - 1)
+
+            self.sheet.range(1, 1).value = self.frames[frame_index]
+            frame_index += 1
